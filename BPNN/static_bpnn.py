@@ -16,8 +16,8 @@ def add_layer(inputs, in_size, out_size, activity_function=None):
 class BPNeuralNetwork:
     def __init__(self):
         self.session = tf.Session()
-        self.x_src = None
-        self.y_src = None
+        self.input_layer = None
+        self.label_layer = None
         self.loss = None
         self.trainer = None
         self.layers = []
@@ -25,22 +25,22 @@ class BPNeuralNetwork:
     def __del__(self):
         self.session.close()
 
-    def train(self, x_data, y_data, limit=10000, learn_rate=0.1):
+    def train(self, cases, labels, limit=100, learn_rate=0.05):
         # build network
-        self.x_src = tf.placeholder(tf.float32, [None, 1])
-        self.y_src = tf.placeholder(tf.float32, [None, 1])
-        self.layers.append(add_layer(self.x_src, 1, 10, activity_function=tf.nn.relu))
+        self.input_layer = tf.placeholder(tf.float32, [None, 1])
+        self.label_layer = tf.placeholder(tf.float32, [None, 1])
+        self.layers.append(add_layer(self.input_layer, 1, 10, activity_function=tf.nn.relu))
         self.layers.append(add_layer(self.layers[0], 10, 1, activity_function=None))
-        self.loss = tf.reduce_mean(tf.reduce_sum(tf.square((self.y_src - self.layers[1])), reduction_indices=[1]))
+        self.loss = tf.reduce_mean(tf.reduce_sum(tf.square((self.label_layer - self.layers[1])), reduction_indices=[1]))
         self.trainer = tf.train.GradientDescentOptimizer(learn_rate).minimize(self.loss)
         initer = tf.initialize_all_variables()
         # do training
         self.session.run(initer)
         for i in range(limit):
-            self.session.run(self.trainer, feed_dict={self.x_src: x_data, self.y_src: y_data})
+            self.session.run(self.trainer, feed_dict={self.input_layer: cases, self.label_layer: labels})
 
-    def predict(self, x_data):
-        return self.session.run(self.layers[-1], feed_dict={self.x_src: x_data})
+    def predict(self, case):
+        return self.session.run(self.layers[-1], feed_dict={self.input_layer: case})
 
     def test(self):
         x_data = np.array([[1, 0, 0, 1, 0, 1, 0, 1, 0, 1]]).transpose()
