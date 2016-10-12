@@ -2,15 +2,14 @@ import tensorflow as tf
 import numpy as np
 
 
-def make_layer(inputs, in_size, out_size, activate_function=None):
+def make_layer(inputs, in_size, out_size, activate=None):
     weights = tf.Variable(tf.random_normal([in_size, out_size]))
     basis = tf.Variable(tf.zeros([1, out_size]) + 0.1)
-    weights_plus_b = tf.matmul(inputs, weights) + basis
-    if activate_function is None:
-        ans = weights_plus_b
+    result = tf.matmul(inputs, weights) + basis
+    if activate is None:
+        return result
     else:
-        ans = activate_function(weights_plus_b)
-    return ans
+        return activate(result)
 
 
 class BPNeuralNetwork:
@@ -44,12 +43,12 @@ class BPNeuralNetwork:
         in_size = self.input_n
         out_size = self.hidden_size[0]
         inputs = self.input_layer
-        self.hidden_layers.append(make_layer(inputs, in_size, out_size, activate_function=tf.nn.relu))
+        self.hidden_layers.append(make_layer(inputs, in_size, out_size, activate=tf.nn.relu))
         for i in range(self.hidden_n-1):
             in_size = out_size
             out_size = self.hidden_size[i+1]
             inputs = self.hidden_layers[-1]
-            self.hidden_layers.append(make_layer(inputs, in_size, out_size, activate_function=tf.nn.relu))
+            self.hidden_layers.append(make_layer(inputs, in_size, out_size, activate=tf.nn.relu))
         # build output layer
         self.output_layer = make_layer(self.hidden_layers[-1], self.hidden_size[-1], self.output_n)
 
@@ -66,10 +65,10 @@ class BPNeuralNetwork:
         return self.session.run(self.output_layer, feed_dict={self.input_layer: case})
 
     def test(self):
-        x_data = np.array([[1, 0, 0, 1, 0, 1, 0, 1, 0, 1]]).transpose()
-        y_data = np.array([[0, 1, 1, 0, 1, 0, 1, 0, 1, 0]]).transpose()
-        test_data = np.array([[0, 1]]).transpose()
-        self.setup(1, [10, 5], 1)
+        x_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+        y_data = np.array([[0, 1, 1, 0]]).transpose()
+        test_data = np.array([[0, 1]])
+        self.setup(2, [10, 5], 1)
         self.train(x_data, y_data)
         print self.predict(test_data)
 

@@ -2,15 +2,14 @@ import tensorflow as tf
 import numpy as np
 
 
-def add_layer(inputs, in_size, out_size, activity_function=None):
+def make_layer(inputs, in_size, out_size, activate=None):
     weights = tf.Variable(tf.random_normal([in_size, out_size]))
     basis = tf.Variable(tf.zeros([1, out_size]) + 0.1)
-    weights_plus_b = tf.matmul(inputs, weights) + basis
-    if activity_function is None:
-        ans = weights_plus_b
+    result = tf.matmul(inputs, weights) + basis
+    if activate is None:
+        return result
     else:
-        ans = activity_function(weights_plus_b)
-    return ans
+        return activate(result)
 
 
 class BPNeuralNetwork:
@@ -27,10 +26,10 @@ class BPNeuralNetwork:
 
     def train(self, cases, labels, limit=100, learn_rate=0.05):
         # build network
-        self.input_layer = tf.placeholder(tf.float32, [None, 1])
+        self.input_layer = tf.placeholder(tf.float32, [None, 2])
         self.label_layer = tf.placeholder(tf.float32, [None, 1])
-        self.layers.append(add_layer(self.input_layer, 1, 10, activity_function=tf.nn.relu))
-        self.layers.append(add_layer(self.layers[0], 10, 1, activity_function=None))
+        self.layers.append(make_layer(self.input_layer, 2, 10, activate=tf.nn.relu))
+        self.layers.append(make_layer(self.layers[0], 10, 2, activate=None))
         self.loss = tf.reduce_mean(tf.reduce_sum(tf.square((self.label_layer - self.layers[1])), reduction_indices=[1]))
         self.trainer = tf.train.GradientDescentOptimizer(learn_rate).minimize(self.loss)
         initer = tf.initialize_all_variables()
@@ -43,9 +42,9 @@ class BPNeuralNetwork:
         return self.session.run(self.layers[-1], feed_dict={self.input_layer: case})
 
     def test(self):
-        x_data = np.array([[1, 0, 0, 1, 0, 1, 0, 1, 0, 1]]).transpose()
-        y_data = np.array([[0, 1, 1, 0, 1, 0, 1, 0, 1, 0]]).transpose()
-        test_data = np.array([[0, 1]]).transpose()
+        x_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+        y_data = np.array([[0, 1, 1, 0]]).transpose()
+        test_data = np.array([[0, 1]])
         self.train(x_data, y_data)
         print self.predict(test_data)
 
