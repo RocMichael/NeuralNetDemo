@@ -16,7 +16,7 @@ class BPNeuralNetwork:
     def __init__(self):
         self.session = tf.Session()
         self.loss = None
-        self.trainer = None
+        self.optimizer = None
         self.input_n = 0
         self.hidden_n = 0
         self.hidden_size = []
@@ -54,12 +54,12 @@ class BPNeuralNetwork:
 
     def train(self, cases, labels, limit=100, learn_rate=0.05):
         self.loss = tf.reduce_mean(tf.reduce_sum(tf.square((self.label_layer - self.output_layer)), reduction_indices=[1]))
-        self.trainer = tf.train.GradientDescentOptimizer(learn_rate).minimize(self.loss)
+        self.optimizer = tf.train.GradientDescentOptimizer(learn_rate).minimize(self.loss)
         initer = tf.initialize_all_variables()
         # do training
         self.session.run(initer)
         for i in range(limit):
-            self.session.run(self.trainer, feed_dict={self.input_layer: cases, self.label_layer: labels})
+            self.session.run(self.optimizer, feed_dict={self.input_layer: cases, self.label_layer: labels})
 
     def predict(self, case):
         return self.session.run(self.output_layer, feed_dict={self.input_layer: case})
