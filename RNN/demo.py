@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.python.ops import rnn, rnn_cell
 import numpy as np
 from tensorflow.python.ops.rnn_cell import MultiRNNCell
+import gensim.models.word2vec
 
 
 class RecurrentNeuralNetwork:
