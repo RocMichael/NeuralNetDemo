@@ -8,7 +8,7 @@ class HuffmanTreeNode:
         self.left = None
         self.right = None
         self.value = value  # the value of word
-        self.code = "" # huffman code
+        self.code = '' # huffman code
 
 
 class HuffmanTree:
