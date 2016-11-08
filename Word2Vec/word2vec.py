@@ -112,8 +112,8 @@ class Word2Vec:
         error = np.zeros([1, self.vec_len])
         for level in range(len(word_huffman)):
             branch = word_huffman[level]
-            q = sigmoid(input_vector.dot(node.value.T))
-            grad = self.learn_rate * (1 - int(branch) - q)
+            p = sigmoid(input_vector.dot(node.value.T))
+            grad = self.learn_rate * (1 - int(branch) - p)
             error += grad * node.value
             node.value += grad * input_vector
             node.value = preprocessing.normalize(node.value)
