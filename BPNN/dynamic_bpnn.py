@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-
 import tensorflow as tf
 import numpy as np
 
@@ -44,8 +43,7 @@ class BPNeuralNetwork:
         # build hidden layers
         in_size = self.input_n
         out_size = self.hidden_size[0]
-        inputs = self.input_layer
-        self.hidden_layers.append(make_layer(inputs, in_size, out_size, activate=tf.nn.relu))
+        self.hidden_layers.append(make_layer(self.input_layer, in_size, out_size, activate=tf.nn.relu))
         for i in range(self.hidden_n-1):
             in_size = out_size
             out_size = self.hidden_size[i+1]
