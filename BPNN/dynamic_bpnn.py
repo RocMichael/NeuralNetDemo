@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+
+
 import tensorflow as tf
 import numpy as np
 
@@ -13,8 +16,8 @@ def make_layer(inputs, in_size, out_size, activate=None):
 
 
 class BPNeuralNetwork:
-    def __init__(self):
-        self.session = tf.Session()
+    def __init__(self, session):
+        self.session = session
         self.loss = None
         self.optimizer = None
         self.input_n = 0
@@ -26,18 +29,17 @@ class BPNeuralNetwork:
         self.output_layer = None
         self.label_layer = None
 
-    def __del__(self):
-        self.session.close()
-
-    def setup(self, ni, nh, no):
+    def setup(self, layers):
         # set size args
-        self.input_n = ni
-        self.hidden_n = len(nh)  # count of hidden layers
-        self.hidden_size = nh  # count of cells in each hidden layer
-        self.output_n = no
-        # build input layer
+        if len(layers) < 3:
+            return
+        self.input_n = layers[0]
+        self.hidden_n = len(layers) - 2  # count of hidden layers
+        self.hidden_size = layers[1:-1]  # count of cells in each hidden layer
+        self.output_n = layers[-1]
+
+        # build network
         self.input_layer = tf.placeholder(tf.float32, [None, self.input_n])
-        # build label layer
         self.label_layer = tf.placeholder(tf.float32, [None, self.output_n])
         # build hidden layers
         in_size = self.input_n
@@ -55,9 +57,8 @@ class BPNeuralNetwork:
     def train(self, cases, labels, limit=100, learn_rate=0.05):
         self.loss = tf.reduce_mean(tf.reduce_sum(tf.square((self.label_layer - self.output_layer)), reduction_indices=[1]))
         self.optimizer = tf.train.GradientDescentOptimizer(learn_rate).minimize(self.loss)
-        initer = tf.initialize_all_variables()
-        # do training
-        self.session.run(initer)
+
+        self.session.run(tf.initialize_all_variables())
         for i in range(limit):
             self.session.run(self.optimizer, feed_dict={self.input_layer: cases, self.label_layer: labels})
 
@@ -68,9 +69,16 @@ class BPNeuralNetwork:
         x_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
         y_data = np.array([[0, 1, 1, 0]]).transpose()
         test_data = np.array([[0, 1]])
-        self.setup(2, [10, 5], 1)
+        self.setup([2, 10, 5, 1])
         self.train(x_data, y_data)
-        print self.predict(test_data)
+        print(self.predict(test_data))
 
-nn = BPNeuralNetwork()
-nn.test()
+
+def main():
+    with tf.Session() as session:
+        model = BPNeuralNetwork(session)
+        model.test()
+
+
+if __name__ == '__main__':
+    main()

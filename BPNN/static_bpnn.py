@@ -14,15 +14,11 @@ def make_layer(inputs, in_size, out_size, activate=None):
 
 class BPNeuralNetwork:
     def __init__(self):
-        self.session = tf.Session()
         self.input_layer = None
         self.label_layer = None
         self.loss = None
         self.optimizer = None
         self.layers = []
-
-    def __del__(self):
-        self.session.close()
 
     def train(self, cases, labels, limit=100, learn_rate=0.05):
         # build network
@@ -32,9 +28,9 @@ class BPNeuralNetwork:
         self.layers.append(make_layer(self.layers[0], 10, 2, activate=None))
         self.loss = tf.reduce_mean(tf.reduce_sum(tf.square((self.label_layer - self.layers[1])), reduction_indices=[1]))
         self.optimizer = tf.train.GradientDescentOptimizer(learn_rate).minimize(self.loss)
-        initer = tf.initialize_all_variables()
+
         # do training
-        self.session.run(initer)
+        self.session.run(tf.initialize_all_variables())
         for i in range(limit):
             self.session.run(self.optimizer, feed_dict={self.input_layer: cases, self.label_layer: labels})
 
@@ -48,5 +44,9 @@ class BPNeuralNetwork:
         self.train(x_data, y_data)
         print self.predict(test_data)
 
-nn = BPNeuralNetwork()
-nn.test()
+
+def main():
+    with tf.Session() as session:
+        model = BPNeuralNetwork()
+        model.session = session
+        model.test()

@@ -24,8 +24,8 @@ class Word2Vec:
         self.vec_len = vec_len
         self.learn_rate = learn_rate
         self.win_len = win_len
-        self.word_dict = None  # each element is a dict, including: word,possibility,vector,huffmancode
-        self.huffman = None  # the object of HuffmanTree
+        self.word_dict = None
+        self.huffman = None
 
     def build_word_dict(self, word_freq):
         # word_dict = {word: {word, freq, possibility, init_vector, huffman_code}, }
@@ -43,7 +43,7 @@ class Word2Vec:
             word_dict[item[0]] = temp_dict
         self.word_dict = word_dict
 
-    def train(self, word_list, model='cbow', ignore=0):
+    def train(self, word_list, model='cbow', limit=100, ignore=0):
         # build word_dict and huffman tree
         if self.huffman is None:
             if self.word_dict is None:
@@ -56,20 +56,21 @@ class Word2Vec:
             method = self.CBOW
         else:
             method = self.SkipGram
-        # start to train word vector
+        # train word vector
         before = (self.win_len - 1) >> 1
         after = self.win_len - 1 - before
         total = len(self.cutted_text_list)
         count = 0
-        for line in self.cutted_text_list:
-            line_len = len(line)
-            for i in range(line_len):
-                word = line[i]
-                if is_stop_word(word):
-                    continue
-                context = line[max(0, i - before):i] + line[i + 1:min(line_len, i + after + 1)]
-                method(word, context)
-            count += 1
+        for epoch in range(limit):
+            for line in self.cutted_text_list:
+                line_len = len(line)
+                for i in range(line_len):
+                    word = line[i]
+                    if is_stop_word(word):
+                        continue
+                    context = line[max(0, i - before):i] + line[i + 1:min(line_len, i + after + 1)]
+                    method(word, context)
+                count += 1
 
     def CBOW(self, word, context):
         if not word in self.word_dict:
@@ -86,28 +87,28 @@ class Word2Vec:
         if len(context) == 0:
             return
         # update huffman
-        error = self.update_huffman(word_code, gram_vector_sum, self.huffman.root)
+        error = self.along_huffman(word_code, gram_vector_sum, self.huffman.root)
         # modify word vector
         for context_gram in context:
             self.word_dict[context_gram]['vector'] += error
             self.word_dict[context_gram]['vector'] = preprocessing.normalize(self.word_dict[context_gram]['vector'])
 
-    def SkipGram(self, word, gram_word_list):
+    def SkipGram(self, word, context):
         if not word in self.word_dict:
             return
         word_vector = self.word_dict[word]['vector']
-        for i in range(len(gram_word_list))[::-1]:
-            if not gram_word_list[i] in self.word_dict:
-                gram_word_list.pop(i)
-        if len(gram_word_list) == 0:
+        for i in range(len(context))[::-1]:
+            if not context[i] in self.word_dict:
+                context.pop(i)
+        if len(context) == 0:
             return
-        for u in gram_word_list:
+        for u in context:
             u_huffman = self.word_dict[u]['code']
-            error = self.update_huffman(u_huffman, word_vector, self.huffman.root)
+            error = self.along_huffman(u_huffman, word_vector, self.huffman.root)
             self.word_dict[word]['vector'] += error
             self.word_dict[word]['vector'] = preprocessing.normalize(self.word_dict[word]['vector'])
 
-    def update_huffman(self, word_code, input_vector, root):
+    def along_huffman(self, word_code, input_vector, root):
         node = root
         error = np.zeros([1, self.vec_len])
         for level in range(len(word_code)):
@@ -129,8 +130,10 @@ class Word2Vec:
         return self.word_dict[word]['vector']
 
 if __name__ == '__main__':
-    data = ['Merge multiple sorted inputs into a single sorted output',
-            'The API below differs from textbook heap algorithms in two aspects']
+    data = [
+        'Merge multiple sorted inputs into a single sorted output',
+        'The API below differs from textbook heap algorithms in two aspects'
+    ]
     wv = Word2Vec(vec_len=50)
     wv.train(data, model='cbow')
     print(wv['into'])
